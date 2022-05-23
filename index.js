@@ -20,8 +20,15 @@ async function run()
         await client.connect();
 
         // Database collections
-        const partsCollections = client.db('COMPACT').collection('parts');
-        
+        const partsCollections = client.db('compact_db').collection('parts');
+
+
+        // GET API for getting all parts
+        app.get('/parts' , async(req,res) => {
+            const parts = await partsCollections.find().toArray();
+            res.send({'All parts':parts});
+        })
+
     }
     finally{
 
