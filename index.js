@@ -11,7 +11,7 @@ app.use(express.json());
 
 
 // Database
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.1ghbw.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 async function run()
@@ -21,12 +21,29 @@ async function run()
 
         // Database collections
         const partsCollections = client.db('compact_db').collection('parts');
+        const orderCollections = client.db('compact_db').collection('order');
 
 
         // GET API for getting all parts
         app.get('/parts' , async(req,res) => {
             const parts = await partsCollections.find().toArray();
-            res.send({'All parts':parts});
+            const new_parts = parts.reverse();
+            res.send(new_parts);
+        })
+
+        // GET API for getting single part
+        app.get('/parts/:id' , async(req,res) => {
+            const id = req.params.id;
+            const query = {_id:ObjectId(id)};
+            const part = await partsCollections.findOne(query);
+            res.send(part);
+        })
+
+        // POST API for place order
+        app.post('/order' , async(req,res) => {
+            const order = req.body;
+            const part = await orderCollections.insertOne(order);
+            res.send(part);
         })
 
     }
