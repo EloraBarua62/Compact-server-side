@@ -54,6 +54,15 @@ async function run()
             res.send(parts);
         })
 
+
+        // POST API for add parts
+        app.post('/parts' , async(req,res) => {
+            const parts = req.body;
+            const result = await partsCollections.insertOne(parts);
+            res.send(result);
+        })
+
+
         // POST API for place order
         app.post('/order' , async(req,res) => {
             const order = req.body;
@@ -67,6 +76,15 @@ async function run()
             const query = { _id: ObjectId(id) };
             const part = await partsCollections.deleteOne(query);
             res.send(part);
+        })
+
+
+         // DELETE API for delete order
+        app.delete('/manage_order/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const order = await orderCollections.deleteOne(query);
+            res.send(order);
         })
 
 
