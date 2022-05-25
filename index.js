@@ -22,6 +22,7 @@ async function run()
         // Database collections
         const partsCollections = client.db('compact_db').collection('parts');
         const orderCollections = client.db('compact_db').collection('order');
+        const userCollections = client.db('compact_db').collection('user');
 
 
         // GET API for getting all parts
@@ -68,6 +69,14 @@ async function run()
             const order = req.body;
             const part = await orderCollections.insertOne(order);
             res.send(part);
+        })
+
+
+        // POST API for rating,review
+        app.post('/user' , async(req,res) => {
+            const userInfo = req.body;
+            const result = await userCollections.insertOne(userInfo);
+            res.send(result);
         })
 
          // DELETE API for delete parts
