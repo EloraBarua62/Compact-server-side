@@ -39,12 +39,37 @@ async function run()
             res.send(part);
         })
 
+        // GET API for getting all parts
+        app.get('/my_orders', async (req, res) => {
+            const email = req.query.email;
+            const query = {email:email}
+            const my_orders = await orderCollections.find(query).toArray();
+            res.send(my_orders);
+        })
+
+
+        // // GET API for getting all parts
+        // app.get('/manage_products', async (req, res) => {
+        //     const parts = await partsCollections.find().toArray();
+        //     const new_parts = parts.reverse();
+        //     res.send(new_parts);
+        // })
+
         // POST API for place order
         app.post('/order' , async(req,res) => {
             const order = req.body;
             const part = await orderCollections.insertOne(order);
             res.send(part);
         })
+
+         // DELETE API for delete parts
+        app.delete('/manage_products/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const part = await partsCollections.deleteOne(query);
+            res.send(part);
+        })
+
 
     }
     finally{
