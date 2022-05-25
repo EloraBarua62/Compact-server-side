@@ -48,12 +48,11 @@ async function run()
         })
 
 
-        // // GET API for getting all parts
-        // app.get('/manage_products', async (req, res) => {
-        //     const parts = await partsCollections.find().toArray();
-        //     const new_parts = parts.reverse();
-        //     res.send(new_parts);
-        // })
+        // GET API for getting all parts
+        app.get('/manage_orders', async (req, res) => {
+            const parts = await orderCollections.find().toArray();
+            res.send(parts);
+        })
 
         // POST API for place order
         app.post('/order' , async(req,res) => {
