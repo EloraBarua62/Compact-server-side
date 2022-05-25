@@ -26,6 +26,14 @@ async function run()
 
 
         // GET API for getting all parts
+        app.get('/user' , async(req,res) => {
+            const user = await userCollections.find().toArray();
+            const user_reverse = user.reverse();
+            res.send(user_reverse);
+        })
+
+
+        // GET API for getting all parts
         app.get('/parts' , async(req,res) => {
             const parts = await partsCollections.find().toArray();
             const new_parts = parts.reverse();
