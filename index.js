@@ -54,7 +54,7 @@ async function run()
             const email = req.query.email;
             const query = {email:email}
             const my_orders = await orderCollections.find(query).toArray();
-            // res.send(my_orders);
+            res.send(my_orders);
 
 
 
@@ -104,10 +104,16 @@ async function run()
         })
 
 
-        // POST API for rating,review
-        app.post('/user' , async(req,res) => {
-            const userInfo = req.body;
-            const result = await userCollections.insertOne(userInfo);
+        // PUT API for rating,review
+        app.put('/user_rating/:email' , async(req,res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const userRatingInfo = req.body;
+            const options = { upsert: true }
+            const updateDoc = {
+                $set: userRatingInfo,
+            }
+            const result = await userCollections.updateOne(filter,updateDoc,options);
             res.send(result);
         })
 
