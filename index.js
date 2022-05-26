@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 require('dotenv').config();
+var jwt = require('jsonwebtoken');
 const port = process.env.PORT || 4000;
 const app = express();
 
@@ -25,11 +26,11 @@ async function run()
         const userCollections = client.db('compact_db').collection('user');
 
 
-        // GET API for getting all parts
+        // GET API for getting all user
         app.get('/user' , async(req,res) => {
             const user = await userCollections.find().toArray();
-            const user_reverse = user.reverse();
-            res.send(user_reverse);
+            const result = user.reverse();
+            res.send(result);            
         })
 
 
@@ -48,12 +49,18 @@ async function run()
             res.send(part);
         })
 
-        // GET API for getting all parts
+        // GET API for getting my_orders
         app.get('/my_orders', async (req, res) => {
             const email = req.query.email;
             const query = {email:email}
             const my_orders = await orderCollections.find(query).toArray();
-            res.send(my_orders);
+            // res.send(my_orders);
+
+
+
+            // // JWT
+            // const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            // res.send({ my_orders, token });
         })
 
 
@@ -77,6 +84,23 @@ async function run()
             const order = req.body;
             const part = await orderCollections.insertOne(order);
             res.send(part);
+        })
+
+
+
+        // PUT API for user data entry
+        app.put('/user/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const filter = { email: email };
+            const options = { upsert: true }
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await userCollections.updateOne(filter, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+            res.send({ result, token });
+
         })
 
 
