@@ -41,12 +41,45 @@ async function run()
         const partsCollections = client.db('compact_db').collection('parts');
         const orderCollections = client.db('compact_db').collection('order');
         const userCollections = client.db('compact_db').collection('user');
+        const ratingsCollections = client.db('compact_db').collection('ratings');
+
+
+
+
+
+        const verifyAdmin = async (req, res, next) => {
+            const requester = req.decoded.email;
+            const requesterAccount = await userCollections.findOne({ email: requester });
+            if (requesterAccount.role === 'admin') {
+                next();
+            }
+            else {
+                res.status(403).send({ message: 'forbiden' });
+            }
+        }
+
+
+
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await userCollections.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin });
+        })
 
 
         // GET API for getting all user
-        app.get('/user' , async(req,res) => {
+        app.get('/user' ,verifyJWT, async(req,res) => {
             const user = await userCollections.find().toArray();
             const result = user.reverse();
+            res.send(result);            
+        })
+
+
+        // GET API for getting all user
+        app.get('/ratings' , async(req,res) => {
+            const ratings = await ratingsCollections.find().toArray();
+            const result = ratings.reverse();
             res.send(result);            
         })
 
@@ -104,6 +137,27 @@ async function run()
         })
 
 
+        // POST API for rating,review
+        app.post('/user_rating' , async(req,res) => {
+            const ratings = req.body;
+            const rusult = await ratingsCollections.insertOne(ratings);
+            res.send(rusult);
+        })
+
+      
+
+
+        app.put('/user/admin/:email', verifyJWT,verifyAdmin, async (req, res) => {
+            const email = req.params.email;
+            const filter = { email: email };
+            const updateDoc = {
+                $set: { role: 'admin' },
+            };
+            const result = await userCollections.updateOne(filter, updateDoc);
+            res.send(result);
+        })
+
+
 
         // PUT API for user data entry
         app.put('/user/:email', async (req, res) => {
@@ -122,7 +176,7 @@ async function run()
 
 
         // PUT API for rating,review
-        app.put('/user_rating/:email' , async(req,res) => {
+        app.put('/user_info/:email' , async(req,res) => {
             const email = req.params.email;
             const filter = { email: email };
             const userRatingInfo = req.body;
@@ -135,7 +189,7 @@ async function run()
         })
 
          // DELETE API for delete parts
-        app.delete('/manage_products/:id', async (req, res) => {
+        app.delete('/manage_products/:id',verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const part = await partsCollections.deleteOne(query);
@@ -144,7 +198,7 @@ async function run()
 
 
          // DELETE API for delete order
-        app.delete('/manage_order/:id', async (req, res) => {
+        app.delete('/manage_order/:id',verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const order = await orderCollections.deleteOne(query);
