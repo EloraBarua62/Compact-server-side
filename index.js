@@ -243,7 +243,7 @@ async function run()
 
 
          // DELETE API for delete order
-        app.delete('/manage_order/:id',verifyJWT,verifyAdmin, async (req, res) => {
+        app.delete('/manage_order/:id',verifyJWT, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const order = await orderCollections.deleteOne(query);
