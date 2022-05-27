@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require('dotenv').config();
 var jwt = require('jsonwebtoken');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 4000;
 const app = express();
 
@@ -29,7 +30,8 @@ function verifyJWT(req, res, next) {
 
 
 // Database
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId, ObjectID } = require('mongodb');
+const { default: Stripe } = require("stripe");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.1ghbw.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 async function run()
@@ -42,6 +44,7 @@ async function run()
         const orderCollections = client.db('compact_db').collection('order');
         const userCollections = client.db('compact_db').collection('user');
         const ratingsCollections = client.db('compact_db').collection('ratings');
+        const paymentsCollections = client.db('compact_db').collection('payments');
 
 
 
@@ -58,12 +61,45 @@ async function run()
             }
         }
 
+        app.post('/create-payment-intent', verifyJWT, async (req, res) => {
+            const service = req.body;
+            console.log(service);
+            const price = service.price;
+            const amount = price * 100;
+            console.log(amount)
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
+
+
+
+        app.patch('/my_order/:id' ,verifyJWT, async(req,res) => {
+            const id = req.params.id;
+            const payment = req.body;
+            const filter = {_id: ObjectId(id)};
+            const updateDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+
+            const updateMyOrder = await orderCollections.updateOne(filter,updateDoc);
+            const result = await paymentsCollections.insertOne(payment);
+            res.send(updateDoc);
+        })
 
 
         app.get('/admin/:email', async (req, res) => {
             const email = req.params.email;
             const user = await userCollections.findOne({ email: email });
-            const isAdmin = user.role === 'admin';
+            const isAdmin = user?.role === 'admin';
             res.send({ admin: isAdmin });
         })
 
@@ -111,6 +147,15 @@ async function run()
             else {
                 return res.status(403).send({ message: 'forbiden' })
             } 
+        })
+
+
+        // GET API for getting user's single order
+        app.get('/my_order/:id',verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const order = await orderCollections.findOne(query);
+            res.send(order);
         })
 
 
@@ -189,7 +234,7 @@ async function run()
         })
 
          // DELETE API for delete parts
-        app.delete('/manage_products/:id',verifyAdmin, async (req, res) => {
+        app.delete('/manage_products/:id',verifyJWT,verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const part = await partsCollections.deleteOne(query);
@@ -198,7 +243,7 @@ async function run()
 
 
          // DELETE API for delete order
-        app.delete('/manage_order/:id',verifyAdmin, async (req, res) => {
+        app.delete('/manage_order/:id',verifyJWT,verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: ObjectId(id) };
             const order = await orderCollections.deleteOne(query);

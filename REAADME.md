@@ -1,6 +1,6 @@
 # COMPACT
 
-COMPACT is a book inventory website [COMPACT]().
+COMPACT is a book inventory website [COMPACT](https://compact-f2ed0.web.app/).
 
  ## Project Details
 
