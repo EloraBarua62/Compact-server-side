@@ -116,6 +116,7 @@ async function run()
         app.get('/ratings' , async(req,res) => {
             const ratings = await ratingsCollections.find().toArray();
             const result = ratings.reverse();
+            console.log(result);
             res.send(result);            
         })
 
